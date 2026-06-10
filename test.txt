@@ -1,0 +1,248 @@
+diff --git a/infer_single_image.py b/infer_single_image.py
+--- a/infer_single_image.py
++++ b/infer_single_image.py
+@@ -16,24 +16,60 @@ from polygon_inference import PolygonInference
+ from utils import log
+ 
+ parser = argparse.ArgumentParser()
+ parser.add_argument("-e", "--experiment_path", help="path to experiment folder to evaluate")
++parser.add_argument("--input-dir", type=Path, default=None, help="folder of .tif inputs")
++parser.add_argument("--output-dir", type=Path, default=Path(os.getenv("OUTPUT_DIR", ".")), help="folder for outputs")
+ args = parser.parse_args()
+ 
+-def infer_single(input_: Path | bytes, /):
++
++def _geometries_from_pixels(polygons_list, image_data):
++    with rasterio.open(io.BytesIO(image_data)) as src:
++        crs = src.crs
++        transform = src.transform
++
++    geometries = []
++    for poly in polygons_list:
++        if len(poly) < 3:
++            continue
++        coords = [transform * (float(x), float(y)) for x, y in poly]
++        geom = shapely.Polygon(coords)
++        if not geom.is_valid:
++            geom = geom.buffer(0)
++        geometries.append(geom)
++    return crs, geometries
++
++
++def infer_single(input_: Path | bytes, inference: PolygonInference, /):
+     image_data = input_ if isinstance(input_, bytes) else input_.read_bytes()
++    args.output_dir.mkdir(parents=True, exist_ok=True)
+ 
+-    output_prefix = '' if isinstance(input_, bytes) else f"{input_.stem}_"
+-
+-    with rasterio.open(io.BytesIO(image_data)):
+-        crs = src.crs
+-
+-    # Initialize inference
+-    inference = PolygonInference(args.experiment_path)
++    if isinstance(input_, bytes):
++        output_prefix = ""
++        visualization_path = args.output_dir / "visualization.png"
++        gpkg_path = args.output_dir / "polygons.gpkg"
++        source_name = "stdin"
++    else:
++        output_prefix = f"{input_.stem}_"
++        visualization_path = args.output_dir / f"{input_.stem}_visualization.png"
++        gpkg_path = args.output_dir / f"{input_.stem}.gpkg"
++        source_name = input_.name
++
++    debug_prefix = str(args.output_dir / output_prefix) if output_prefix else f"{args.output_dir}/"
+     
+     # Get inference results
+-    polygons_list = inference.infer(image_data, debug=True, debug_prefix=output_prefix)
++    polygons_list = inference.infer(image_data, debug=True, debug_prefix=debug_prefix)
+ 
+     # Decode image for visualization
+     nparr = np.frombuffer(image_data, np.uint8)
+     image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+     if image is None:
+         log("Failed to load image from stdin", "ERROR")
+-        return
++        return []
+ 
+     # Get image dimensions
+     height, width = image.shape[:2]
+@@ -48,8 +84,9 @@ def infer_single(input_: Path | bytes, /):
+     
+     # Plot merged result
+     vis_image_merged = image.copy()
+-    formatted_contours = [np.array(cnt).reshape(-1, 1, 2).astype(np.int32) for cnt in polygons_list]
+-    cv2.drawContours(vis_image_merged, formatted_contours, -1, (0, 255, 0), 1)
++    formatted_contours = [np.array(cnt).reshape(-1, 1, 2).astype(np.int32) for cnt in polygons_list if len(cnt) >= 3]
++    if formatted_contours:
++        cv2.drawContours(vis_image_merged, formatted_contours, -1, (0, 255, 0), 1)
+     
+     # Draw dots at vertices for merged result
+     for contour in formatted_contours:
+@@ -69,37 +106,60 @@ def infer_single(input_: Path | bytes, /):
+     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+ 
+     # Save visualization
+-    output_path = output_prefix+"visualization.png"
+-    plt.savefig(output_path, dpi=100, bbox_inches='tight', pad_inches=0)
++    plt.savefig(visualization_path, dpi=100, bbox_inches='tight', pad_inches=0)
+     plt.close()
+ 
+-    log(f"Saved main visualization to {output_path}")
++    log(f"Saved main visualization to {visualization_path}")
+ 
++    crs, geometries = _geometries_from_pixels(polygons_list, image_data)
+     gdf = gpd.GeoDataFrame(
+         {
+-            'poly_id': range(len(polygons_list)),
+-            "geometry": [shapely.Polygon(poly) for poly in polygons_list]
++            'poly_id': range(len(geometries)),
++            'source': [source_name] * len(geometries),
++            "geometry": geometries,
+         },
+         crs=crs,
+     )
+-    gdf.to_file("polygons.gpkg" if not isinstance(input_, Path) else f"{input_.stem}.gpkg", driver="GPKG")
++    gdf.to_file(gpkg_path, driver="GPKG")
++    log(f"Saved GeoPackage to {gpkg_path}")
+ 
+-    # Print polygons to stdout
+-    print(json.dumps(polygons_list))
++    return polygons_list
+ 
+ def main():
++    if args.input_dir is not None:
++        images = sorted(
++            list(args.input_dir.glob("*.tif")) + list(args.input_dir.glob("*.tiff"))
++        )
++        if not images:
++            raise FileNotFoundError(f"No .tif or .tiff files found in {args.input_dir}")
++        inference = PolygonInference(args.experiment_path)
++        summary = []
++        for idx, path in enumerate(images):
++            print('=================')
++            print(f"Starting {path.name} ({idx+1} / {len(images)})")
++            polygons = infer_single(path, inference)
++            summary.append({"input": str(path), "geopackage": str(args.output_dir / f"{path.stem}.gpkg"), "polygon_count": len(polygons)})
++        print(json.dumps(summary))
++        return
++
+     # Load image from stdin
+     image_data = sys.stdin.buffer.read()
+ 
+     if len(image_data) < 5:
+         images = list(Path("image_input/folder").glob("*.tif"))
+         if images:
++            inference = PolygonInference(args.experiment_path)
+             for idx, path in enumerate(images):
+                 print('=================')
+                 print(f"Starting {path.name} ({idx+1} / {len(images)})")
+-                infer_single(path)
++                infer_single(path, inference)
+     else:
+-        infer_single(image_data)
++        inference = PolygonInference(args.experiment_path)
++        # Preserve the original stdin contract: print polygons to stdout.
++        print(json.dumps(infer_single(image_data, inference)))
+ 
+ 
+ if __name__ == "__main__":
+     main()
+diff --git a/polygon_inference.py b/polygon_inference.py
+--- a/polygon_inference.py
++++ b/polygon_inference.py
+@@ -510,7 +510,7 @@ class PolygonInference:
+         self.model = build_model(
+             model_cfg,
+             self.tokenizer,
+-            pretrained=getattr(model_cfg, "BACKBONE_PRETRAINED", True),
++            pretrained=False,
+         )
+         self.model.to(self.device)
+         self.model.eval()
+diff --git a/start_api.sh b/start_api.sh
+--- a/start_api.sh
++++ b/start_api.sh
+@@ -42,6 +42,7 @@ Pix2Poly container commands
+   serve                         Start FastAPI on HOST:PORT.
+   train                         Run torchrun train_ddp.py.
+   infer                         Run one-shot stdin image inference.
++  infer-dir                     Run directory inference from INPUT_DIR to OUTPUT_DIR.
+   publish <run_name> <model>    Copy a training run to a stable name under RUNS_ROOT.
+   help                          Show this help.
+ 
+@@ -50,12 +51,15 @@ Common volumes
+   /workspace/data      Datasets.
+   /workspace/runs      Training outputs and deployed model folders.
+   /workspace/cache     API cache.
++  /io/input            Default GeoTIFF input folder for infer-dir.
++  /io/output           Default artifact output folder for infer-dir.
+ 
+ Useful environment variables
+ 
+   DATA_ROOT, RUNS_ROOT, CACHE_DIR
+   DEFAULT_MODEL_NAME, MODEL_URL, MODEL_AUTO_DOWNLOAD, MODEL_CHECKPOINT
++  INPUT_DIR, OUTPUT_DIR
+   BACKBONE, SCORENET, PATCH_SIZE, OUT_DIM, DATASET, NUM_EPOCHS, BATCH_SIZE
+   NPROC_PER_NODE, HOST, PORT, API_KEY
+ EOF
+ }
+@@ -162,6 +166,14 @@ case "${command}" in
+         export EXPERIMENT_PATH="${EXPERIMENT_PATH:-${MODEL_ROOT}/${DEFAULT_MODEL_NAME}}"
+         exec python infer_single_image.py --experiment_path "${EXPERIMENT_PATH}" "$@"
+         ;;
++    infer-dir|batch-infer)
++        export EXPERIMENT_PATH="${EXPERIMENT_PATH:-${MODEL_ROOT}/${DEFAULT_MODEL_NAME}}"
++        exec python infer_single_image.py \
++            --experiment_path "${EXPERIMENT_PATH}" \
++            --input-dir "${INPUT_DIR:-/io/input}" \
++            --output-dir "${OUTPUT_DIR:-/io/output}" \
++            "$@"
++        ;;
+     publish)
+         publish_model "$@"
+         ;;
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -126,6 +126,40 @@ cat image.tif | docker run --rm -i --gpus all --ipc=host \
+   pix2poly:p2p infer
+ ```
+ 
++## Directory Inference
++
++For batch inference, create a single mounted handoff folder with an `input`
++directory containing at least one `.tif` or `.tiff`:
++
++```text
++input-output/
++  input/
++    image-a.tif
++    image-b.tif
++  output/
++```
++
++Run the container with that folder mounted at `/io`:
++
++```bash
++mkdir -p input-output/output
++docker run --rm --gpus all --ipc=host \
++  -v "$PWD/runs:/workspace/runs" \
++  -v "$PWD/input-output:/io" \
++  pix2poly:p2p infer-dir
++```
++
++For each input image, `infer-dir` writes these files under `/io/output`:
++
++- `<image>.gpkg`
++- `<image>_visualization.png`
++- `<image>_tile-visualization.png`
++- `<image>_bitmap-visualization.png`
++
++GeoPackage geometries are transformed from model pixel coordinates through the
++source GeoTIFF affine transform and CRS. If the input image is not georeferenced,
++the GeoPackage falls back to pixel coordinates with no CRS.
++
+ ## Inference Visualizations
+ 
+ `pix2poly infer` writes these files in its working directory:
