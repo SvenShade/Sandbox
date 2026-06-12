@@ -1,1 +1,16 @@
+  JAX_PLATFORM_NAME=gpu ./.venv/bin/python -m mava.experiments.swarm3d_training_profile \
+    --preset train \
+    --num-envs 256 \
+    --rollout-length 200 \
+    --update-batch-size 2 \
+    --ppo-epochs 3 \
+    --num-minibatches 16 \
+    --fast-fixed-horizon-env \
+    --include-learner-phases \
+    --include-update-breakdown \
+    --include-policy-rollout \
+    --skip-env-benchmarks \
+    --iterations 5 \
+    --warmup 1 \
+    --output-json runs/experiments/rtx4500-default-learner-breakdown.json
 
