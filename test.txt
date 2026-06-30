@@ -1,36 +1,15 @@
-  git clone -b main /path/to/swarm3d-standalone-handoff-c519960.bundle swarm3d_standalone
-  cd swarm3d_standalone
+  git clone s3d_noise.bundle s3d-noise
+  cd s3d-noise/swarm3d_standalone
 
-  python3.11 -m venv .venv
+  python -m venv .venv
   ./.venv/bin/python -m pip install --upgrade pip setuptools wheel
-  ./.venv/bin/python -m pip install -e ".[cuda12,dev]"
+  ./.venv/bin/python -m pip install -e ".[cuda12]"
 
-  Then smoke test:
-
-  ./.venv/bin/python - <<'PY'
-  import jax
-  import swarm3d
-  print("jax", jax.__version__)
-  print("backend", jax.default_backend())
-  print("devices", jax.devices())
-  PY
-
-  Train default run:
-
-  PYTHONPATH=src ./.venv/bin/python -m swarm3d.train
-
-  Start web app:
-
-  PYTHONPATH=src ./.venv/bin/python -m swarm3d.server --preset eval --policy boids
-
-  If you cloned the full workspace bundle rather than the clean standalone bundle, then the Python project is one level down:
-
-  git clone /path/to/full-workspace.bundle swarm3d-codex
-  cd swarm3d-codex/swarm3d_standalone
-  ./.venv/bin/python -m pip install -e .
-
-  Quick check: before installing, run:
-
-  ls
-
-  You should see pyproject.toml, src/, web/, tests/, and README.md in the current directory.
+  PYTHONPATH=src ./.venv/bin/python -m swarm3d.swarm3d_noise_generalisation_ablation \
+    --timesteps 200000000 \
+    --seeds 0 1 2 \
+    --num-envs 256 \
+    --eval-episodes 32 \
+    --warmup-steps 400000 \
+    --preset-buckets tiny,small,medium,large,huge \
+    --jax-platform gpu
