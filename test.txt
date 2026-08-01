@@ -1,19 +1,28 @@
-AIza
+  That means Google returned no HTTP response. An invalid API key or disabled Map Tiles API would normally return an HTTP 4xx JSON response. All four locations failed identically, so this is not location-related.
 
-git clone s3d_noise.bundle s3d-noise
-  cd s3d-noise/swarm3d_standalone
+  The likely cause is the company proxy: curl and pip use proxy environment variables automatically, while Node 22 only does so when environment-proxy support is enabled. Node.js proxy documentation
+  (https://nodejs.org/docs/latest-v22.x/api/cli.html#node_use_env_proxy1).
 
-  python -m venv .venv
-  ./.venv/bin/python -m pip install --upgrade pip setuptools wheel
-  ./.venv/bin/python -m pip install -e ".[cuda12]"
+  Run these on the dev machine:
 
-  PYTHONPATH=src ./.venv/bin/python -m swarm3d.swarm3d_noise_generalisation_ablation \
-    --timesteps 200000000 \
-    --seeds 0 1 2 \
-    --num-envs 256 \
-    --eval-episodes 32 \
-    --warmup-steps 400000 \
-    --preset-buckets tiny,small,medium,large,huge \
-    --jax-platform gpu
+  curl -sS -o /dev/null -w 'curl HTTP %{http_code}\n' \
+    --connect-timeout 10 \
+    https://tile.googleapis.com/v1/createSession
 
-SyCve8FgG8e4oYKJsFSHQqZSkWNbkcbHQzc
+  node -e 'fetch("https://tile.googleapis.com/v1/createSession").then(r => console.log("node HTTP", r.status)).catch(e => console.error(e.cause?.code, e.message))'
+
+  NODE_USE_ENV_PROXY=1 node -e 'fetch("https://tile.googleapis.com/v1/createSession").then(r => console.log("proxied node HTTP", r.status)).catch(e => console.error(e.cause?.code, e.message))'
+
+  Any HTTP status, including 400, 403, or 405, proves transport works. If only the third command succeeds, restart the application with:
+
+  NODE_USE_ENV_PROXY=1 npm run dev
+
+  Then run Rebuild Panoramas again. The spawned precache process will inherit that setting.
+
+  If curl also times out, the network needs outbound HTTPS access to:
+
+  tile.googleapis.com:443
+  maps.googleapis.com:443
+
+  The existing cache was not overwritten: the failed replacements were retained under .failed-rebuilds/. Also, completed_locations: 4 means four attempts finished, not four successes. The subsequent diagnostic-
+  report failure is a separate defect in failure reporting.
