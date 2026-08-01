@@ -1,28 +1,3 @@
-  That means Google returned no HTTP response. An invalid API key or disabled Map Tiles API would normally return an HTTP 4xx JSON response. All four locations failed identically, so this is not location-related.
-
-  The likely cause is the company proxy: curl and pip use proxy environment variables automatically, while Node 22 only does so when environment-proxy support is enabled. Node.js proxy documentation
-  (https://nodejs.org/docs/latest-v22.x/api/cli.html#node_use_env_proxy1).
-
-  Run these on the dev machine:
-
-  curl -sS -o /dev/null -w 'curl HTTP %{http_code}\n' \
-    --connect-timeout 10 \
-    https://tile.googleapis.com/v1/createSession
-
-  node -e 'fetch("https://tile.googleapis.com/v1/createSession").then(r => console.log("node HTTP", r.status)).catch(e => console.error(e.cause?.code, e.message))'
-
-  NODE_USE_ENV_PROXY=1 node -e 'fetch("https://tile.googleapis.com/v1/createSession").then(r => console.log("proxied node HTTP", r.status)).catch(e => console.error(e.cause?.code, e.message))'
-
-  Any HTTP status, including 400, 403, or 405, proves transport works. If only the third command succeeds, restart the application with:
-
-  NODE_USE_ENV_PROXY=1 npm run dev
-
-  Then run Rebuild Panoramas again. The spawned precache process will inherit that setting.
-
-  If curl also times out, the network needs outbound HTTPS access to:
-
-  tile.googleapis.com:443
-  maps.googleapis.com:443
-
-  The existing cache was not overwritten: the failed replacements were retained under .failed-rebuilds/. Also, completed_locations: 4 means four attempts finished, not four successes. The subsequent diagnostic-
-  report failure is a separate defect in failure reporting.
+NO_PROXY="${NO_PROXY:+$NO_PROXY,}127.0.0.1,localhost" \
+NODE_USE_ENV_PROXY=1 \
+npm run dev
