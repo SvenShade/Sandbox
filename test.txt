@@ -1,2 +1,4 @@
-git fetch /path/to/gg-replica-vlm-validation-fix-2026-08-02.bundle pipeline-v2
+git status --short
+git fetch /path/to/gg-replica-active-cue-vlm-v3-2026-08-02.bundle pipeline-v2
 git merge --ff-only FETCH_HEAD
+npm install
