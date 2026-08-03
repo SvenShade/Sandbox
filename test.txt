@@ -1,6 +1,21 @@
-git status
+git cherry-pick --abort
 
-git rev-parse --verify CHERRY_PICK_HEAD 2>/dev/null || true
-git rev-parse --verify MERGE_HEAD 2>/dev/null || true
+Then apply all three commits in order:
 
-git log --oneline -5
+git cherry-pick ccf32e0462eaf31eb81325366200dd459dccc6e4
+git cherry-pick 4a1398347ef035186833e4462a18d52dde19e2c4
+git cherry-pick b67f2fd10612ab19a94a3ec05818b3a6a4324aa4
+
+These correspond to:
+
+1. Expert cue breadth and literal OCR, v3.3
+2. Default 16 cues and maximum 32
+3. Placeholder removal, landmark ranking, terminal scrolling, v3.4
+
+Then verify:
+
+git status --short
+npm test -- --run \
+  __tests__/scripts/precacheVlmV3.test.ts \
+  __tests__/lib/precache/precacheTrace.test.ts
+npm run typecheck
