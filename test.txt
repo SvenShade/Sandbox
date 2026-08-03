@@ -1,3 +1,25 @@
 git fetch ../gg-v34.bundle pipeline-v2:refs/remotes/handoff/pipeline-v2
 git cherry-pick b67f2fd10612ab19a94a3ec05818b3a6a4324aa4
 npm run typecheck
+
+
+
+git status --short
+
+Preserve local configuration and annotation changes if present:
+
+git stash push -m "local dev settings before v3.4" -- \
+  .env.local \
+  data/survey-setup/annotation-overrides.json
+
+Fetch and apply the checkpoint:
+
+git fetch ../gg-v34.bundle pipeline-v2:refs/remotes/handoff/pipeline-v2
+
+git cherry-pick b67f2fd10612ab19a94a3ec05818b3a6a4324aa4
+
+Restore local files:
+
+git stash pop
+npm run typecheck
+npm run dev
