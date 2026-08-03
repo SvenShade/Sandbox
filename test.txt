@@ -1,6 +1,12 @@
 cd ~/gg-pipeline
 git status --short
-git fetch /path/to/gg-replica-cue-localization-utility-2026-08-03.bundle pipeline-v2
-git cherry-pick d59f7ec
+git switch -c feat/cue-recall-geometry
+git fetch ../gg-cue-recall.bundle pipeline-v2:refs/remotes/handoff/pipeline-v2
+git cherry-pick dc92f8fecdb8c1c2a2ce1c08b2e9617a5a68778d
+
 npm run typecheck
+npm test -- \
+  __tests__/scripts/precacheVlmV3.test.ts \
+  __tests__/components/annotate/AnnotationLayer.test.tsx \
+  __tests__/lib/precache/precacheTrace.test.ts
 npm run dev
