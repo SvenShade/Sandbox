@@ -1,11 +1,7 @@
-root=data/precache-main/loc_auckland_queen_st
+git fetch ../gg-v33.bundle pipeline-v2
+git merge --ff-only FETCH_HEAD
 
-tar -czf auckland-v32-debug.tar.gz \
-  --exclude='*.request.json' \
-  "$root/precache-trace.json" \
-  "$root/participant-assistance.json" \
-  "$root/artifacts/vlm" \
-  "$root/artifacts/consolidation.json" \
-  "$root/artifacts/ocr.json" \
-  "$root/artifacts/crops" \
-  "$root/artifacts/captures"
+git log -1 --oneline
+npm run typecheck
+npm test -- __tests__/scripts/precacheVlmV3.test.ts
+npm run dev
