@@ -1,7 +1,3 @@
-git fetch ../gg-v33.bundle pipeline-v2
-git merge --ff-only FETCH_HEAD
-
-git log -1 --oneline
+git fetch ../gg-v34.bundle pipeline-v2:refs/remotes/handoff/pipeline-v2
+git cherry-pick b67f2fd10612ab19a94a3ec05818b3a6a4324aa4
 npm run typecheck
-npm test -- __tests__/scripts/precacheVlmV3.test.ts
-npm run dev
