@@ -1,4 +1,6 @@
+cd ~/gg-pipeline
 git status --short
-git fetch /path/to/gg-replica-active-cue-vlm-v3-2026-08-02.bundle pipeline-v2
-git merge --ff-only FETCH_HEAD
-npm install
+git fetch /path/to/gg-replica-cue-localization-utility-2026-08-03.bundle pipeline-v2
+git cherry-pick d59f7ec
+npm run typecheck
+npm run dev
