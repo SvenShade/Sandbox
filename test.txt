@@ -1,12 +1,9 @@
 git fetch origin
 
-git log --oneline --left-right \
+git status --short
+
+git rev-list --left-right --count \
   origin/feat/geoguessing-assistance-pipeline-v2...HEAD
 
-git push origin HEAD:feat/geoguessing-assistance-pipeline-v2
-
-This will succeed only as a fast-forward. Then open/update the MR from feat/geoguessing-assistance-pipeline-v2.
-
-Optionally align your local branch name afterward:
-
-git branch -m feat/geoguessing-assistance-pipeline-v2
+git log --oneline --left-right --cherry-pick --graph --decorate \
+  origin/feat/geoguessing-assistance-pipeline-v2...HEAD
