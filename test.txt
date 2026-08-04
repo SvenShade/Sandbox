@@ -1,25 +1,12 @@
-Transfer this revised package:
+git fetch origin
 
-gg-final-study-push-v2-handoff-2026-08-04.zip
+git log --oneline --left-right \
+  origin/feat/geoguessing-assistance-pipeline-v2...HEAD
 
-Then run on the dev machine:
+git push origin HEAD:feat/geoguessing-assistance-pipeline-v2
 
-cd ~/experimental-testbed
+This will succeed only as a fast-forward. Then open/update the MR from feat/geoguessing-assistance-pipeline-v2.
 
-# Restore the tracked file shown as deleted in your output.
-git restore data/config.study.json
+Optionally align your local branch name afterward:
 
-git fetch ~/gg-final-study-push-v2-2026-08-04.bundle \
-  feat/geoguessing-assistance-pipeline-v2:refs/remotes/handoff/final-study-push-v2
-
-git cherry-pick 231596756be61af4618d104b14522024cefaa798
-
-Then repeat:
-
-npm run lint
-npm run typecheck
-npm run test:coverage
-npm run test:integration
-npm run build
-git diff --check origin/main...HEAD
-git status --short
+git branch -m feat/geoguessing-assistance-pipeline-v2
