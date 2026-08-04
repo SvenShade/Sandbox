@@ -13,3 +13,5 @@ Then:
 3. Import the .tar.zstd precache under Run Precaching into a new data/precache-<name> root.
 4. Select that root in setup.
 5. Verify it through Demo Experiment.
+
+http://localhost:3000/study?pid=test-participant-001&study=YOUR_STUDY_ID&session=test-session-001
