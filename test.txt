@@ -1,9 +1,32 @@
+This confirms the histories contain rewritten equivalents. Rebase only the five new commits onto the existing remote branch, avoiding a force push.
+
+First preserve the local study configuration change:
+
+git stash push -m "local study configuration" -- data/config.study.json
+
+Then replay the five new commits onto the existing branch:
+
 git fetch origin
 
-git status --short
+git rebase --onto \
+  origin/feat/geoguessing-assistance-pipeline-v2 \
+  be097e49^
+
+Verify the result:
 
 git rev-list --left-right --count \
   origin/feat/geoguessing-assistance-pipeline-v2...HEAD
 
-git log --oneline --left-right --cherry-pick --graph --decorate \
-  origin/feat/geoguessing-assistance-pipeline-v2...HEAD
+Expected output:
+
+0 5
+
+Then push:
+
+git push origin HEAD:feat/geoguessing-assistance-pipeline-v2
+
+Finally restore your local configuration:
+
+git stash pop
+
+This preserves the existing remote history and adds only the five genuinely new commits.
