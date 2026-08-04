@@ -1,21 +1,25 @@
-git cherry-pick --abort
+Transfer this revised package:
 
-Then apply all three commits in order:
+gg-final-study-push-v2-handoff-2026-08-04.zip
 
-git cherry-pick ccf32e0462eaf31eb81325366200dd459dccc6e4
-git cherry-pick 4a1398347ef035186833e4462a18d52dde19e2c4
-git cherry-pick b67f2fd10612ab19a94a3ec05818b3a6a4324aa4
+Then run on the dev machine:
 
-These correspond to:
+cd ~/experimental-testbed
 
-1. Expert cue breadth and literal OCR, v3.3
-2. Default 16 cues and maximum 32
-3. Placeholder removal, landmark ranking, terminal scrolling, v3.4
+# Restore the tracked file shown as deleted in your output.
+git restore data/config.study.json
 
-Then verify:
+git fetch ~/gg-final-study-push-v2-2026-08-04.bundle \
+  feat/geoguessing-assistance-pipeline-v2:refs/remotes/handoff/final-study-push-v2
 
-git status --short
-npm test -- --run \
-  __tests__/scripts/precacheVlmV3.test.ts \
-  __tests__/lib/precache/precacheTrace.test.ts
+git cherry-pick 231596756be61af4618d104b14522024cefaa798
+
+Then repeat:
+
+npm run lint
 npm run typecheck
+npm run test:coverage
+npm run test:integration
+npm run build
+git diff --check origin/main...HEAD
+git status --short
