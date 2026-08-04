@@ -1,16 +1,15 @@
-• Not from the screenshot alone. After completing the rebase and push, verify:
+git clone --branch feat/geoguessing-assistance-pipeline-v2 --single-branch \
+  git@gitlab.au.lmco.com:ast/machine-reasoning/trust/shade/experimental-testbed.git
 
-  git fetch origin
+cd experimental-testbed
+cp .env.example .env.local
+npm ci
+npm run setup
 
-  git rev-list --left-right --count \
-    origin/feat/geoguessing-assistance-pipeline-v2...HEAD
+Then:
 
-  git log -1 --oneline origin/feat/geoguessing-assistance-pipeline-v2
-
-  Completely up to date means:
-
-  0  0
-
-  And the remote’s latest commit should be:
-
-  Isolate application checks from native runtimes
+1. Configure the three .env.local values.
+2. Import your selected-pool JSON in Choose Pool.
+3. Import the .tar.zstd precache under Run Precaching into a new data/precache-<name> root.
+4. Select that root in setup.
+5. Verify it through Demo Experiment.
