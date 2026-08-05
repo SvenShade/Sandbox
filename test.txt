@@ -1,7 +1,5 @@
-git clone --branch feat/geoguessing-assistance-pipeline-v2 --single-branch \
-  git@gitlab.au.lmco.com:ast/machine-reasoning/trust/shade/experimental-testbed.git
+git clone -b feat/pipeline-polish-and-validation ../gg-polish.bundle exp-tst
 
-cd experimental-testbed
 cp .env.example .env.local
 npm ci
 npm run setup
@@ -10,7 +8,7 @@ Then:
 
 1. Configure the three .env.local values.
 2. Import your selected-pool JSON in Choose Pool.
-3. Import the .tar.zstd precache under Run Precaching into a new data/precache-<name> root.
+3. Import the .tar.zst precache under Run Precaching into a new data/precache-<name> root.
 4. Select that root in setup.
 5. Verify it through Demo Experiment.
 
