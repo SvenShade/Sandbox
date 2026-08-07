@@ -1,15 +1,12 @@
-git clone -b feat/pipeline-polish-and-validation ../gg-polish.bundle exp-tst
+cd ~/exp-tst
+git status --short
 
-cp .env.example .env.local
-npm ci
-npm run setup
+git fetch ~/pipeline-vlm-resilience-20260807.bundle \
+  feat/pipeline-polish-and-validation:refs/remotes/handoff/vlm-resilience
 
-Then:
+git switch feat/pipeline-polish-and-validation
+git merge --ff-only handoff/vlm-resilience
 
-1. Configure the three .env.local values.
-2. Import your selected-pool JSON in Choose Pool.
-3. Import the .tar.zst precache under Run Precaching into a new data/precache-<name> root.
-4. Select that root in setup.
-5. Verify it through Demo Experiment.
+If the fast-forward fails because the dev branch has diverged, test it separately:
 
-http://localhost:3000/study?pid=test-participant-001&study=YOUR_STUDY_ID&session=test-session-001
+git switch -c test/vlm-resilience handoff/vlm-resilience
