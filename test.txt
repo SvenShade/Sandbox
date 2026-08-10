@@ -1,12 +1,37 @@
-cd ~/exp-tst
+Bundle: gg-pipeline-rationale-landmarks-63bfac1.bundle
+
+- Size: 4.2 MB
+- SHA-256: a7b89dddfddb1d440b65320a08adbc04580b24f689591066c7cc50f52d66dffd
+- Contains complete branch history
+- Excludes precache data, native runtimes, model assets, and the local cache symlink
+- Verified by cloning and checking out feat/pipeline-polish-and-validation
+
+Update Dev Machine
+Transfer the bundle, then run from the existing repository:
+
 git status --short
 
-git fetch ~/pipeline-vlm-resilience-20260807.bundle \
-  feat/pipeline-polish-and-validation:refs/remotes/handoff/vlm-resilience
+Ensure there are no uncommitted changes you need to preserve, then:
+
+git fetch /path/to/gg-pipeline-rationale-landmarks-63bfac1.bundle \
+  refs/heads/feat/pipeline-polish-and-validation:refs/remotes/handoff/pipeline-polish-and-validation
 
 git switch feat/pipeline-polish-and-validation
-git merge --ff-only handoff/vlm-resilience
+git merge --ff-only refs/remotes/handoff/pipeline-polish-and-validation
+git rev-parse --short HEAD
 
-If the fast-forward fails because the dev branch has diverged, test it separately:
+The final command should print:
 
-git switch -c test/vlm-resilience handoff/vlm-resilience
+63bfac1
+
+If the branch does not yet exist locally:
+
+git switch -c feat/pipeline-polish-and-validation \
+  refs/remotes/handoff/pipeline-polish-and-validation
+
+Then install and verify:
+
+npm ci
+npm run typecheck
+npm test
+npm run dev
