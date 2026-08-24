@@ -1,5 +1,5 @@
-git fetch /path/to/gg-pipeline-vlm-demo-81d2e36.bundle \
-  feat/pipeline-polish-and-validation
+git clone gg_25-08.bundle \
+  -b feat/pipeline-polish-and-validation experimental-testbed
 
-git switch feat/pipeline-polish-and-validation
-git merge --ff-only FETCH_HEAD
+cd experimental-testbed
+npm ci
