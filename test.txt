@@ -3,3 +3,8 @@ git clone gg_25-08.bundle \
 
 cd experimental-testbed
 npm ci
+
+
+npm run inspect:start
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-key
+http://localhost:3000/survey-setup
