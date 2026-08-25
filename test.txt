@@ -1,10 +1,6 @@
-git clone gg_25-08.bundle \
-  -b feat/pipeline-polish-and-validation experimental-testbed
+Hypotheses:
 
-cd experimental-testbed
-npm ci
+log_score(h) = Σ active_cues support(c,h) × utility_strength(c) × confidence_weight(c)
+posterior = softmax(log_score)
 
-
-npm run inspect:start
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your-key
-http://localhost:3000/survey-setup
+Hypotheses begin with equal prior odds. Cue activation immediately recomputes scores. Final cue ordering uses utility, active-set discriminativity and confidence; deduplication happens before ranking.
