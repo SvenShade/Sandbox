@@ -1,6 +1,35 @@
-Hypotheses:
+cd ~/gg
+mkdir -p models/precache/qwen/qwen38-27b
 
-log_score(h) = Σ active_cues support(c,h) × utility_strength(c) × confidence_weight(c)
-posterior = softmax(log_score)
+cp /path/to/Qwen3.8-27B-Q8_0.gguf \
+  models/precache/qwen/qwen38-27b/
 
-Hypotheses begin with equal prior odds. Cue activation immediately recomputes scores. Final cue ordering uses utility, active-set discriminativity and confidence; deduplication happens before ranking.
+cp /path/to/mmproj-Qwen3.8-27B-Q8_0.gguf \
+  models/precache/qwen/qwen38-27b/
+
+Verify their hashes:
+
+sha256sum models/precache/qwen/qwen38-27b/*.gguf
+
+Expected:
+
+f5c702d8820d36fb55985bb238fc83ee3a313e920f4b752a437c3a6a9e14e4c8  Qwen3.8-27B-Q8_0.gguf
+2e968a6af97ce35d8971890b257b9b7edabf20ad91450501fa53162a19ee33eb  mmproj-Qwen3.8-27B-Q8_0.gguf
+
+Then run:
+
+npm run precache:setup -- --stage model --model-key qwen38-27b
+npm run precache:setup -- --stage verify --model-key qwen38-27b
+
+The model stage should report verified existing and skip downloading. Both files are required: the main model and multimodal projector. Original safetensors, a different quantization, or a GGUF with a
+different checksum will not be accepted.
+
+Start it with:
+
+export VLM_MODEL_KEY=qwen38-27b
+export VLM_MODEL=qwen-3.8-27b
+
+npm run precache:vlm:start
+npm run precache:vlm:canary -- \
+  --base-url http://127.0.0.1:8000/v1 \
+  --model qwen-3.8-27b
