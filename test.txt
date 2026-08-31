@@ -1,4 +1,48 @@
-NODE_USE_ENV_PROXY=1 \
-UV_SYSTEM_CERTS=true \
-NO_PROXY="${NO_PROXY:+$NO_PROXY,}127.0.0.1,localhost" \
-npm run precache:setup -- --stage vision --model-key qwen38-27b
+cd ~/gg
+
+git status --short
+git branch --show-current
+
+git fetch /path/to/new/gg.bundle \
+  refs/heads/feat/pipeline-polish-and-validation:refs/remotes/handoff/latest
+
+git switch feat/pipeline-polish-and-validation
+git merge --ff-only refs/remotes/handoff/latest
+
+git rev-parse HEAD
+
+Expected HEAD:
+
+9f92ccef65cbb7c2a1e8a7ad97f2abdf45b32144
+
+This preserves:
+
+- .native-runtime/
+- .venv-vision/ and .venv-ocr/
+- models/precache/qwen/
+- data/precache-*
+- .env.local
+- Existing llama.cpp and provider installations
+
+Do not run git clean -fdx, reset the repository, or reclone.
+
+Verify
+
+npm test -- --run __tests__/components/assistant/RegularAIAssistOverlay.test.tsx
+npm run typecheck
+
+No dependency files changed since the previous bundle, so npm ci and pipeline installation are unnecessary.
+
+Restart App
+Stop the existing Next.js process with Ctrl+C, then:
+
+npm run dev -- --hostname 0.0.0.0
+
+For a production deployment:
+
+npm run build
+npm start -- --hostname 0.0.0.0
+
+If the fast-forward merge fails because local commits were added, preserve them and apply only the new change:
+
+git cherry-pick 9f92ccef65cbb7c2a1e8a7ad97f2abdf45b32144
